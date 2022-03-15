@@ -1,15 +1,16 @@
 import express from 'express';
 const app = express();
 import 'dotenv/config';
-import { UserModel } from './model';
-import { databaseConfig } from './config/database/database';
-import { PlanoOrm } from './core/plano';
 import 'reflect-metadata';
+import { databaseConfig } from './config/database/database';
+import { PlanoOrm } from '../src/core/plano';
+import { UserModel } from './UserModel';
+
+PlanoOrm.instance(databaseConfig as any);
 
 app.get('/', async (req, res) => {
-  const user = await UserModel.count();
-  console.log(user);
-  res.send(user);
+  const user = await UserModel.query().where('id', 1);
+  res.json(user);
 });
 
 app.listen(process.env.PORT, function () {
@@ -17,5 +18,3 @@ app.listen(process.env.PORT, function () {
     `Example app listening on port http://localhost:${process.env.PORT}`,
   );
 });
-
-new PlanoOrm().create(databaseConfig as any);

@@ -4,3 +4,8 @@ export interface IColumnOptions {
   serializeAs?: string;
   name?: string;
 }
+
+export interface IRelation {
+  id?: string;
+  foreignKey?: string;
+}

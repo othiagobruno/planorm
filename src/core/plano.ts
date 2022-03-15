@@ -4,7 +4,7 @@ import { Injector } from '../decorators/inject';
 import { IConnection } from '../types/connection';
 
 export class PlanoOrm {
-  private conn: Knex;
+  private static conn: Knex;
   static booted = false;
 
   public static boot() {
@@ -17,7 +17,11 @@ export class PlanoOrm {
     this.booted = true;
   }
 
-  create(config: IConnection) {
+  static instance(config: IConnection) {
+    if (this.booted === true) {
+      return this.conn;
+    }
+
     this.conn = knex(config);
     Injector.register('connection', this.conn);
     return this.conn;

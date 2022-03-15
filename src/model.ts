@@ -1,10 +1,11 @@
-import { column } from './decorators/model';
+import { Column, Table } from './decorators/model';
 import BaseModel from './model/mode';
 
+@Table('users')
 export class UserModel extends BaseModel {
-  @column()
+  @Column()
   name: string;
 
-  @column({ isPrimary: true })
+  @Column({ isPrimary: true })
   id: number;
 }

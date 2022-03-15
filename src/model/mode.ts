@@ -1,19 +1,29 @@
 import { Knex } from 'knex';
-import { head } from 'lodash';
+
+import { Injector } from '../decorators/inject';
 import { BelongsTo } from '../relations/BelongsTo';
 import { IColumnOptions } from '../types/model';
 
 export default class BaseModel {
-  public static primaryKey: string;
-  public static booted: boolean;
-  public static $columns: Array<IColumnOptions> = [];
-  public static $relationsDefinitions: Map<string, any>;
-  private connection?: Knex;
-  private table: string;
-  public static $adapter: any;
-  idAttribute?: string;
+  // Primary Key
+  static primaryKey: string;
 
-  public static boot() {
+  // Booted BaseModel
+  static booted: boolean;
+
+  // Table Column
+  static $columns: Array<IColumnOptions> = [];
+
+  // KNex Connection
+  private static connection?: Knex = Injector.get<Knex>('connection');
+
+  // Table Name
+  static tableName: string;
+
+  // Relations
+  static $relations: Map<string, any>;
+
+  static boot() {
     if (!this.hasOwnProperty('booted')) {
       this.booted = false;
     }
@@ -23,11 +33,16 @@ export default class BaseModel {
     this.booted = true;
   }
 
-  getClient() {
-    return this.connection.select(this.table);
+  static query() {
+    this.connection = Injector.get<Knex>('connection');
+    return this.connection.queryBuilder().from(this.tableName);
   }
 
-  public static $addColumn(name: string, options: IColumnOptions) {
+  static $setTableName(tableName: string) {
+    this.tableName = tableName;
+  }
+
+  static $addColumn(name: string, options: IColumnOptions) {
     const column: IColumnOptions = {
       name: name,
       isPrimary: options?.isPrimary || false,
@@ -43,10 +58,10 @@ export default class BaseModel {
     return column;
   }
 
-  public static $addRelation(
+  static $addRelation(
     name: string,
     type: any,
-    relatedModel: () => any,
+    relatedModel: () => BaseModel,
     options: any,
   ) {
     switch (type) {
@@ -70,35 +85,22 @@ export default class BaseModel {
     }
   }
 
-  protected static $addBelongsTo(
-    name: string,
-    relatedModel: () => any,
-    options: any,
-  ) {
-    this.$relationsDefinitions.set(
-      name,
-      new BelongsTo(name, relatedModel, options, this),
-    );
+  static $addBelongsTo(name: string, relatedModel: () => any, options: any) {
+    this.$relations.set(name, new BelongsTo(name, relatedModel, options, this));
   }
 
-  async count(column = '*'): Promise<number> {
-    const client = this.getClient();
-    const countValue = await client.count(`${column} as c`);
-    return countValue[0].c;
+  static async count(): Promise<number> {
+    const countValue = await this.query().count('id as c');
+    return countValue?.[String(0)]?.c;
   }
 
-  async findById(id: number | string): Promise<object> {
-    const where = {};
-    const client = this.getClient();
-    where[this.idAttribute] = id;
-    return await client.where(where).then(head);
+  static findById(id: number | string) {
+    return this.query().where({ [this.primaryKey]: id });
   }
 
-  async insert(obj: any): Promise<object> {
-    const client = this.getClient();
-    const [id] = await client.insert(obj);
+  static async insert(obj: any): Promise<object> {
+    const [id] = await this.query().insert(obj);
     const savedObj = await this.findById(id);
-
     return savedObj;
   }
 }

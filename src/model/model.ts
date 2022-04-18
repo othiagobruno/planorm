@@ -52,6 +52,10 @@ export default class BaseModel {
     this.tableName = tableName;
   }
 
+  static addRelation(model: any, type: string) {
+    this.$relations[type] = model;
+  }
+
   static $addColumn(name: string, options: IColumnOptions) {
     const column: IColumnOptions = {
       name: name,

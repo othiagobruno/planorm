@@ -32,3 +32,5 @@ export class UserModel extends BaseModel {
     console.log(id);
   }
 }
+
+UserModel.query().load('posts', (b) => b.where('id', 1));
